@@ -1,4 +1,4 @@
-package ru.yandex.buggyweatherapp.api
+package ru.yandex.buggyweatherapp.data.api
 
 import com.google.gson.Gson
 import retrofit2.Retrofit

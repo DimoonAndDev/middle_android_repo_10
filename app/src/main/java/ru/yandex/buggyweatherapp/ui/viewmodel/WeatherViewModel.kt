@@ -1,20 +1,18 @@
-package ru.yandex.buggyweatherapp.viewmodel
+package ru.yandex.buggyweatherapp.ui.viewmodel
 
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import ru.yandex.buggyweatherapp.WeatherApplication
-import ru.yandex.buggyweatherapp.model.Location
-import ru.yandex.buggyweatherapp.model.WeatherData
-import ru.yandex.buggyweatherapp.repository.LocationRepository
-import ru.yandex.buggyweatherapp.repository.WeatherRepository
+import ru.yandex.buggyweatherapp.domain.model.Location
+import ru.yandex.buggyweatherapp.domain.model.WeatherData
+import ru.yandex.buggyweatherapp.data.repository.LocationRepositoryImpl
+import ru.yandex.buggyweatherapp.data.repository.WeatherRepositoryImpl
 import ru.yandex.buggyweatherapp.utils.ImageLoader
 import java.util.Timer
 import java.util.TimerTask
@@ -25,9 +23,9 @@ class WeatherViewModel : ViewModel() {
     private lateinit var activityContext: Context
     
     
-    private val weatherRepository = WeatherRepository()
+    private val weatherRepository = WeatherRepositoryImpl()
     private val locationRepository by lazy { 
-        LocationRepository(activityContext)
+        LocationRepositoryImpl(activityContext)
     }
     
     

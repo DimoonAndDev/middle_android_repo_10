@@ -1,4 +1,4 @@
-package ru.yandex.buggyweatherapp.model
+package ru.yandex.buggyweatherapp.domain.model
 
 data class WeatherData(
     val cityName: String,

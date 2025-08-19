@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -13,20 +14,24 @@ import ru.yandex.buggyweatherapp.domain.model.Location
 import ru.yandex.buggyweatherapp.domain.model.WeatherData
 import ru.yandex.buggyweatherapp.data.repository.LocationRepositoryImpl
 import ru.yandex.buggyweatherapp.data.repository.WeatherRepositoryImpl
+import ru.yandex.buggyweatherapp.domain.repository.LocationRepository
+import ru.yandex.buggyweatherapp.domain.repository.WeatherRepository
 import ru.yandex.buggyweatherapp.utils.ImageLoader
 import java.util.Timer
 import java.util.TimerTask
+import javax.inject.Inject
 
-class WeatherViewModel : ViewModel() {
+@HiltViewModel
+class WeatherViewModel@Inject constructor(
+    private val weatherRepository: WeatherRepository,
+    private val locationRepository: LocationRepository
+) : ViewModel() {
     
     
     private lateinit var activityContext: Context
     
     
-    private val weatherRepository = WeatherRepositoryImpl()
-    private val locationRepository by lazy { 
-        LocationRepositoryImpl(activityContext)
-    }
+
     
     
     val weatherData = MutableLiveData<WeatherData>()

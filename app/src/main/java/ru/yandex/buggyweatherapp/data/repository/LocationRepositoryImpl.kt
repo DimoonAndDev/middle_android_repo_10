@@ -1,5 +1,6 @@
 package ru.yandex.buggyweatherapp.data.repository
 
+import android.app.Application
 import android.content.Context
 import android.location.Geocoder
 import android.os.Looper
@@ -14,14 +15,17 @@ import ru.yandex.buggyweatherapp.domain.model.Location
 import ru.yandex.buggyweatherapp.domain.repository.LocationRepository
 import ru.yandex.buggyweatherapp.utils.LocationTracker
 import java.util.Locale
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class LocationRepositoryImpl(
+@Singleton
+class LocationRepositoryImpl@Inject constructor(
     
-    private val context: Context
+    private val application: Application
 ): LocationRepository {
     
     private val fusedLocationClient: FusedLocationProviderClient = 
-        LocationServices.getFusedLocationProviderClient(context)
+        LocationServices.getFusedLocationProviderClient(application.applicationContext)
     
     
     private var currentLocation: Location? = null
@@ -98,7 +102,7 @@ class LocationRepositoryImpl(
     override fun getCityNameFromLocation(location: Location): String? {
         try {
             
-            val geocoder = Geocoder(context, Locale.getDefault())
+            val geocoder = Geocoder(application.applicationContext, Locale.getDefault())
             
             @Suppress("DEPRECATION")
             val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
@@ -123,7 +127,7 @@ class LocationRepositoryImpl(
     
     
     private fun startLocationTracking() {
-        LocationTracker.getInstance(context).startTracking()
+        LocationTracker.getInstance(application.applicationContext).startTracking()
     }
     
     

@@ -8,6 +8,7 @@ import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
 import coil.request.ErrorResult
 import coil.request.ImageRequest
@@ -17,7 +18,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import ru.yandex.buggyweatherapp.domain.model.Location
+import kotlinx.coroutines.withContext
+import ru.yandex.buggyweatherapp.domain.model.MyCustomLocation
 import ru.yandex.buggyweatherapp.domain.model.WeatherData
 import ru.yandex.buggyweatherapp.domain.repository.LocationRepository
 import ru.yandex.buggyweatherapp.domain.repository.WeatherRepository
@@ -37,7 +39,7 @@ class WeatherViewModel @Inject constructor(
 
 
     val weatherData = MutableLiveData<WeatherData>()
-    val currentLocation = MutableLiveData<Location>()
+    val currentLocation = MutableLiveData<MyCustomLocation>()
     val isLoading = MutableLiveData<Boolean>()
     val error = MutableLiveData<String>()
     val cityName = MutableLiveData<String>()
@@ -51,34 +53,43 @@ class WeatherViewModel @Inject constructor(
 
     fun initialize(context: Context) {
         this.activityContext = context
-        fetchCurrentLocationWeather()
-
-
-        startAutoRefresh()
+        viewModelScope.launch {
+            fetchCurrentLocationWeather()
+            startAutoRefresh()
+        }
     }
 
 
     fun fetchCurrentLocationWeather() {
-        isLoading.value = true
-        error.value = null
+        viewModelScope.launch {
+            isLoading.value = true
+            error.value = null
 
-        locationRepository.getCurrentLocation { location ->
-            if (location != null) {
-                currentLocation.value = location
+            locationRepository.getCurrentLocation { location ->
+                if (location != null) {
+                    currentLocation.value = location
 
 
-                val cityNameFromLocation = locationRepository.getCityNameFromLocation(location)
-                cityName.value = cityNameFromLocation
-
-                getWeatherForLocation(location)
-            } else {
-                isLoading.value = false
-                error.value = "Unable to get current location"
+                    viewModelScope.launch {
+                        try {
+                            val cityNameFromLocation = withContext(Dispatchers.IO) {
+                                locationRepository.getCityNameFromLocation(location)
+                            }
+                            cityName.value = cityNameFromLocation
+                            getWeatherForLocation(location)
+                        } catch (e: Exception) {
+                            error.value = "Error getting city name: ${e.message}"
+                        }
+                    }
+                } else {
+                    isLoading.value = false
+                    error.value = "Unable to get current location"
+                }
             }
         }
     }
 
-    fun getWeatherForLocation(location: Location) {
+    fun getWeatherForLocation(location: MyCustomLocation) {
         isLoading.value = true
         error.value = null
 
@@ -113,7 +124,7 @@ class WeatherViewModel @Inject constructor(
             if (data != null) {
                 weatherData.value = data
                 cityName.value = data.cityName
-                currentLocation.value = Location(0.0, 0.0, data.cityName)
+                currentLocation.value = MyCustomLocation(0.0, 0.0, data.cityName)
             } else {
                 error.value = exception?.message ?: "Unknown error"
             }

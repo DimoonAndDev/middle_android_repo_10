@@ -1,6 +1,6 @@
 package ru.yandex.buggyweatherapp.domain.model
 
-data class Location(
+data class MyCustomLocation(
     val latitude: Double,
     val longitude: Double,
     val name: String? = null
@@ -18,7 +18,7 @@ data class Location(
     
     
     override fun equals(other: Any?): Boolean {
-        if (other !is Location) return false
+        if (other !is MyCustomLocation) return false
         return latitude == other.latitude && longitude == other.longitude
     }
 }

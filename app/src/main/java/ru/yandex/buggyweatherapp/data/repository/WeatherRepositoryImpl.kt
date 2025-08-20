@@ -6,7 +6,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import ru.yandex.buggyweatherapp.data.api.WeatherApiService
-import ru.yandex.buggyweatherapp.domain.model.Location
+import ru.yandex.buggyweatherapp.domain.model.MyCustomLocation
 import ru.yandex.buggyweatherapp.domain.model.WeatherData
 import ru.yandex.buggyweatherapp.domain.repository.WeatherRepository
 import javax.inject.Inject
@@ -20,7 +20,7 @@ class WeatherRepositoryImpl @Inject constructor(
     private var cachedWeatherData: WeatherData? = null
 
 
-    override fun getWeatherData(location: Location, callback: (WeatherData?, Exception?) -> Unit) {
+    override fun getWeatherData(location: MyCustomLocation, callback: (WeatherData?, Exception?) -> Unit) {
 
         val call = weatherApi.getCurrentWeather(location.latitude, location.longitude)
 
@@ -69,7 +69,7 @@ class WeatherRepositoryImpl @Inject constructor(
     }
 
 
-    private fun parseWeatherData(json: JsonObject, location: Location): WeatherData {
+    private fun parseWeatherData(json: JsonObject, location: MyCustomLocation): WeatherData {
 
         val main = json.getAsJsonObject("main")
         val wind = json.getAsJsonObject("wind")
@@ -103,12 +103,12 @@ class WeatherRepositoryImpl @Inject constructor(
         )
     }
 
-    private fun extractLocationFromResponse(json: JsonObject): Location {
+    private fun extractLocationFromResponse(json: JsonObject): MyCustomLocation {
         val coord = json.getAsJsonObject("coord")
         val lat = coord.get("lat").asDouble
         val lon = coord.get("lon").asDouble
         val name = json.get("name").asString
 
-        return Location(lat, lon, name)
+        return MyCustomLocation(lat, lon, name)
     }
 }

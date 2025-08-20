@@ -1,10 +1,17 @@
 package ru.yandex.buggyweatherapp.ui.viewmodel
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.os.Handler
 import android.os.Looper
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import coil.ImageLoader
+import coil.request.ErrorResult
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,62 +19,57 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import ru.yandex.buggyweatherapp.domain.model.Location
 import ru.yandex.buggyweatherapp.domain.model.WeatherData
-import ru.yandex.buggyweatherapp.data.repository.LocationRepositoryImpl
-import ru.yandex.buggyweatherapp.data.repository.WeatherRepositoryImpl
 import ru.yandex.buggyweatherapp.domain.repository.LocationRepository
 import ru.yandex.buggyweatherapp.domain.repository.WeatherRepository
-import ru.yandex.buggyweatherapp.utils.ImageLoader
 import java.util.Timer
 import java.util.TimerTask
 import javax.inject.Inject
 
 @HiltViewModel
-class WeatherViewModel@Inject constructor(
+class WeatherViewModel @Inject constructor(
     private val weatherRepository: WeatherRepository,
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val imageLoader: ImageLoader
 ) : ViewModel() {
-    
-    
-    private lateinit var activityContext: Context
-    
-    
 
-    
-    
+
+    private lateinit var activityContext: Context
+
+
     val weatherData = MutableLiveData<WeatherData>()
     val currentLocation = MutableLiveData<Location>()
     val isLoading = MutableLiveData<Boolean>()
     val error = MutableLiveData<String>()
     val cityName = MutableLiveData<String>()
-    
-    
+
+
     private val coroutineScope = CoroutineScope(Dispatchers.Main + Job())
-    
-    
+
+
     private var refreshTimer: Timer? = null
-    
-    
+
+
     fun initialize(context: Context) {
         this.activityContext = context
         fetchCurrentLocationWeather()
-        
-        
+
+
         startAutoRefresh()
     }
-    
-    
+
+
     fun fetchCurrentLocationWeather() {
         isLoading.value = true
         error.value = null
-        
+
         locationRepository.getCurrentLocation { location ->
             if (location != null) {
                 currentLocation.value = location
-                
-                
+
+
                 val cityNameFromLocation = locationRepository.getCityNameFromLocation(location)
                 cityName.value = cityNameFromLocation
-                
+
                 getWeatherForLocation(location)
             } else {
                 isLoading.value = false
@@ -75,16 +77,16 @@ class WeatherViewModel@Inject constructor(
             }
         }
     }
-    
+
     fun getWeatherForLocation(location: Location) {
         isLoading.value = true
         error.value = null
-        
+
         weatherRepository.getWeatherData(location) { data, exception ->
-            
+
             Handler(Looper.getMainLooper()).post {
                 isLoading.value = false
-                
+
                 if (data != null) {
                     weatherData.value = data
                 } else {
@@ -93,21 +95,21 @@ class WeatherViewModel@Inject constructor(
             }
         }
     }
-    
+
     fun searchWeatherByCity(city: String) {
         if (city.isBlank()) {
             error.value = "City name cannot be empty"
             return
         }
-        
+
         isLoading.value = true
         error.value = null
-        
-        
+
+
         weatherRepository.getWeatherByCity(city) { data, exception ->
-            
+
             isLoading.value = false
-            
+
             if (data != null) {
                 weatherData.value = data
                 cityName.value = data.cityName
@@ -117,24 +119,44 @@ class WeatherViewModel@Inject constructor(
             }
         }
     }
-    
-    
+
+
     fun formatTemperature(temp: Double): String {
         return "${temp.toInt()}°C"
     }
-    
-    
-    fun loadWeatherIcon(iconCode: String) {
+
+
+    fun loadWeatherIcon(iconCode: String): Bitmap {
+        var bitmap: Bitmap = createBitmap(100, 100)
         coroutineScope.launch {
-            val iconUrl = "https://openweathermap.org/img/wn/$iconCode@2x.png"
-            ImageLoader.loadImage(iconUrl)
+
+            try {
+                val result = imageLoader.execute(
+                    ImageRequest.Builder(activityContext)
+                        .data(iconCode)
+                        .build()
+                )
+                // Обработка результата
+
+                when (result) {
+                    is SuccessResult -> {
+                        bitmap = result.drawable.toBitmap()
+                    }
+
+                    is ErrorResult -> {
+
+                    }
+                }
+            } catch (e: Exception) {
+            }
         }
+        return bitmap
     }
-    
-    
+
+
     private fun startAutoRefresh() {
         refreshTimer = Timer()
-        refreshTimer?.scheduleAtFixedRate(object : TimerTask() {
+        refreshTimer?.schedule(object : TimerTask() {
             override fun run() {
                 currentLocation.value?.let { location ->
                     getWeatherForLocation(location)
@@ -142,19 +164,19 @@ class WeatherViewModel@Inject constructor(
             }
         }, 60000, 60000)
     }
-    
-    
+
+
     fun toggleFavorite() {
         weatherData.value?.let {
             it.isFavorite = !it.isFavorite
-            
+
             weatherData.value = it
         }
     }
-    
-    
+
+
     override fun onCleared() {
         super.onCleared()
-        
+
     }
 }

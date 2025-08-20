@@ -27,15 +27,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.ImageLoader
 import ru.yandex.buggyweatherapp.domain.model.WeatherData
-import ru.yandex.buggyweatherapp.utils.ImageLoader
+import ru.yandex.buggyweatherapp.ui.viewmodel.WeatherViewModel
 import ru.yandex.buggyweatherapp.utils.WeatherIconMapper
 
 @Composable
 fun DetailedWeatherCard(weather: WeatherData) {
     val context = LocalContext.current
     
-    
+    val weatherViewModel = hiltViewModel<WeatherViewModel>()
     val imageView = remember { ImageView(context) }
     
     Card(
@@ -78,7 +80,7 @@ fun DetailedWeatherCard(weather: WeatherData) {
                 ) {
                     
                     val iconUrl = "https://openweathermap.org/img/wn/${weather.icon}@2x.png"
-                    ImageLoader.loadInto(iconUrl, it)
+                    weatherViewModel.loadWeatherIcon(iconUrl)
                 }
                 
                 
@@ -127,7 +129,7 @@ fun DetailedWeatherCard(weather: WeatherData) {
         val iconUrl = "https://openweathermap.org/img/wn/${weather.icon}@2x.png"
         
         
-        val bitmap = ImageLoader.loadImageSync(iconUrl)
+        val bitmap = weatherViewModel.loadWeatherIcon(iconUrl)
         imageView.setImageBitmap(bitmap)
         
         onDispose {

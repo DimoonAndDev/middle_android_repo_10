@@ -90,19 +90,26 @@ class WeatherViewModel @Inject constructor(
     }
 
     fun getWeatherForLocation(location: MyCustomLocation) {
-        isLoading.value = true
-        error.value = null
+        viewModelScope.launch {
+            isLoading.value = true
+            error.value = null
 
-        weatherRepository.getWeatherData(location) { data, exception ->
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    weatherRepository.getWeatherData(location)
+                }
 
-            Handler(Looper.getMainLooper()).post {
                 isLoading.value = false
 
-                if (data != null) {
-                    weatherData.value = data
+                if (result.isSuccess) {
+                    weatherData.value = result.getOrNull()
+                    error.value = null
                 } else {
-                    error.value = exception?.message ?: "Unknown error"
+                    error.value = result.exceptionOrNull()?.message ?: "Unknown error"
                 }
+            } catch (e: Exception) {
+                isLoading.value = false
+                error.value = "Error fetching weather: ${e.message}"
             }
         }
     }
@@ -113,20 +120,30 @@ class WeatherViewModel @Inject constructor(
             return
         }
 
-        isLoading.value = true
-        error.value = null
+        viewModelScope.launch {
+            isLoading.value = true
+            error.value = null
 
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    weatherRepository.getWeatherByCity(city)
+                }
 
-        weatherRepository.getWeatherByCity(city) { data, exception ->
+                isLoading.value = false
 
-            isLoading.value = false
-
-            if (data != null) {
-                weatherData.value = data
-                cityName.value = data.cityName
-                currentLocation.value = MyCustomLocation(0.0, 0.0, data.cityName)
-            } else {
-                error.value = exception?.message ?: "Unknown error"
+                if (result.isSuccess) {
+                    val data = result.getOrNull()
+                    weatherData.value = data
+                    cityName.value = data?.cityName
+                    data?.let {
+                        currentLocation.value = MyCustomLocation(0.0, 0.0, it.cityName)
+                    }
+                } else {
+                    error.value = result.exceptionOrNull()?.message ?: "Unknown error"
+                }
+            } catch (e: Exception) {
+                isLoading.value = false
+                error.value = "Error searching weather: ${e.message}"
             }
         }
     }

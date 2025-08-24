@@ -4,6 +4,7 @@ import ru.yandex.buggyweatherapp.domain.model.MyCustomLocation
 import ru.yandex.buggyweatherapp.domain.model.WeatherData
 
 interface WeatherRepository {
-    fun getWeatherData(location: MyCustomLocation, callback: (WeatherData?, Exception?) -> Unit)
-    fun getWeatherByCity(cityName: String, callback: (WeatherData?, Exception?) -> Unit)
+    suspend fun getWeatherData(location: MyCustomLocation): Result<WeatherData>
+    suspend fun getWeatherByCity(cityName: String): Result<WeatherData>
+    fun getCachedWeatherData(): WeatherData?
 }

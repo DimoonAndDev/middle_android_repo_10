@@ -17,6 +17,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.yandex.buggyweatherapp.domain.model.MyCustomLocation
@@ -50,6 +53,9 @@ class WeatherViewModel @Inject constructor(
     val isLoading = MutableLiveData<Boolean>(false)
     val error = MutableLiveData<String?>()
     val cityName = MutableLiveData<String?>()
+
+    private val _weatherIcon = MutableStateFlow<Bitmap?>(null)
+    val weatherIcon: StateFlow<Bitmap?> = _weatherIcon.asStateFlow()
 
     private var refreshTimer: Timer? = null
 

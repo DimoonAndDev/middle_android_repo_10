@@ -107,7 +107,7 @@ fun WeatherScreen(viewModel: WeatherViewModel, modifier: Modifier = Modifier) {
         weatherData?.let { weather ->
             WeatherCard(
                 weather = weather,
-                cityName = cityName,
+                cityName = cityName?:"city",
                 onFavoriteClick = { viewModel.toggleFavorite() },
                 onRefreshClick = { viewModel.fetchCurrentLocationWeather() }
             )

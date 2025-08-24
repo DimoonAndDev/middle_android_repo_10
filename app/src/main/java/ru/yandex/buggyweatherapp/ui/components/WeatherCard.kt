@@ -28,13 +28,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.ImageLoader
 import ru.yandex.buggyweatherapp.domain.model.WeatherData
 import ru.yandex.buggyweatherapp.ui.viewmodel.WeatherViewModel
 import ru.yandex.buggyweatherapp.utils.WeatherIconMapper
 
 @Composable
-fun DetailedWeatherCard(weather: WeatherData) {
+fun WeatherCard(weather: WeatherData) {
     val context = LocalContext.current
     
     val weatherViewModel = hiltViewModel<WeatherViewModel>()

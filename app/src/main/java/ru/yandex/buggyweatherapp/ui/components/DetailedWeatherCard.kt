@@ -1,7 +1,6 @@
 package ru.yandex.buggyweatherapp.ui.components
 
 import android.graphics.Color
-import android.widget.ImageView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +25,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,20 +35,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import ru.yandex.buggyweatherapp.domain.model.WeatherData
 import ru.yandex.buggyweatherapp.ui.viewmodel.WeatherViewModel
-import ru.yandex.buggyweatherapp.utils.WeatherIconMapper
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @Composable
-fun WeatherCard(weather: WeatherData) {
+fun DetailedWeatherCard(weather: WeatherData) {
     val weatherViewModel = hiltViewModel<WeatherViewModel>()
     val weatherIcon by weatherViewModel.weatherIcon.collectAsState()
     var currentIconUrl by remember { mutableStateOf("") }

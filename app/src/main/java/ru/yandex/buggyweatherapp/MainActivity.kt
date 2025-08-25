@@ -21,12 +21,14 @@ import dagger.hilt.android.AndroidEntryPoint
 import ru.yandex.buggyweatherapp.ui.screens.WeatherScreen
 import ru.yandex.buggyweatherapp.ui.theme.BuggyWeatherAppTheme
 import ru.yandex.buggyweatherapp.ui.viewmodel.WeatherViewModel
-
+//3. Добавлена аннотация Hilt
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
+//3. viewModel через Hilt
+    //10. решены ошибки: рассмотрены все сценарии получения разрешений, добавлено уведомления, что ращрешений нет.
+    // Добавлено действие, если разрешения даны, блок не пустой
     private val weatherViewModel: WeatherViewModel by viewModels()
-
+//10. Добавлены действия при получении разрешений - загрузка инфы
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -40,6 +42,7 @@ class MainActivity : ComponentActivity() {
             }
 
             else -> {
+                //10. добавлено уведобмления при отсутствии разрешений
                 Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show()
             }
         }
@@ -47,7 +50,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+//10. Проверка наличия разрешений
         val hasFineLocation = ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.ACCESS_FINE_LOCATION
@@ -66,6 +69,7 @@ class MainActivity : ComponentActivity() {
                 )
             )
         } else {
+            //10. действие, если разрешение есть
             weatherViewModel.fetchCurrentLocationWeather()
         }
 

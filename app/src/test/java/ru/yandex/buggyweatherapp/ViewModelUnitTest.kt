@@ -29,6 +29,7 @@ import ru.yandex.buggyweatherapp.ui.viewmodel.WeatherViewModel
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
+//5. Тестовый файл переименован согласно назначению.
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(MockitoJUnitRunner::class)
 class WeatherViewModelTest {
@@ -52,6 +53,7 @@ class WeatherViewModelTest {
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
     @Before
+    //5. Добавлены Mock-сущности для проведения юнит-тестов
     fun setUp() {
         MockitoAnnotations.openMocks(this)
         Dispatchers.setMain(testDispatcher)
@@ -67,6 +69,7 @@ class WeatherViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+    //5. Написан простой юнит-тест вместо бессмысленного 2+2=4
     @Test
     fun toggleFavoriteInvertFavoriteStatus() = runTest {
         // Arrange
@@ -79,6 +82,7 @@ class WeatherViewModelTest {
         viewModel.toggleFavorite()
         assertEquals(false, viewModel.weatherData.value?.isFavorite)
     }
+    //5. введение текстового элемента
     private fun createTestWeatherData(): WeatherData {
         return WeatherData(
             cityName = "Moscow",

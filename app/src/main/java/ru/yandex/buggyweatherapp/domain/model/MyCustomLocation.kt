@@ -1,5 +1,5 @@
 package ru.yandex.buggyweatherapp.domain.model
-
+//2. Вынесено в папку domain. логика Clean Architecture
 data class MyCustomLocation(
     val latitude: Double,
     val longitude: Double,

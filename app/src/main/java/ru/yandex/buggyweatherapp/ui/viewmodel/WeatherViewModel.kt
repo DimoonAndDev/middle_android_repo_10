@@ -2,9 +2,6 @@ package ru.yandex.buggyweatherapp.ui.viewmodel
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.os.Handler
-import android.os.Looper
-import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -14,9 +11,7 @@ import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,13 +25,17 @@ import java.util.Timer
 import java.util.TimerTask
 import javax.inject.Inject
 
+//2. вынесено в папку UI. логика Clean Architecture
+//3. Зависимости через HILT
+//8. исправлены ошибки: использование встроенных корутин вместо кстомного скоуп и коллбеков,
+// добавлена очистка ресурсов для избежания утечек памяти, добавлены константы.
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
     private val weatherRepository: WeatherRepository,
     private val locationRepository: LocationRepository,
     private val imageLoader: ImageLoader
-) : ViewModel() {
-
+) : ViewModel() { //8. использование Hilt DI
+    //8. Введены константы для ошибок
     companion object {
         private const val AUTO_REFRESH_DELAY = 60000L
         private const val ERROR_LOCATION = "Unable to get current location"
@@ -48,12 +47,14 @@ class WeatherViewModel @Inject constructor(
 
     private lateinit var activityContext: Context
 
+    //8. добавлено начальное значение
     val weatherData = MutableLiveData<WeatherData?>()
     val currentLocation = MutableLiveData<MyCustomLocation?>()
     val isLoading = MutableLiveData<Boolean>(false)
     val error = MutableLiveData<String?>()
     val cityName = MutableLiveData<String?>()
 
+    //8. stateflow для автоматического обновления иконки
     private val _weatherIcon = MutableStateFlow<Bitmap?>(null)
     val weatherIcon: StateFlow<Bitmap?> = _weatherIcon.asStateFlow()
 
@@ -72,6 +73,7 @@ class WeatherViewModel @Inject constructor(
         locationRepository.getCurrentLocation { location ->
             if (location != null) {
                 currentLocation.value = location
+                //8. вместо кастомного корутина использован встроенный
                 viewModelScope.launch {
                     try {
                         val cityNameFromLocation = withContext(Dispatchers.IO) {
@@ -91,6 +93,7 @@ class WeatherViewModel @Inject constructor(
         }
     }
 
+    //8. метод исправлен на работу через корутины, не черезколбеки, чтобы избежать callback hell
     fun getWeatherForLocation(location: MyCustomLocation) {
         viewModelScope.launch {
             isLoading.value = true
@@ -102,7 +105,7 @@ class WeatherViewModel @Inject constructor(
                 }
 
                 isLoading.value = false
-
+                //8. используется result и when вместо прямой проверки data, лучшая практика
                 if (result.isSuccess) {
                     weatherData.value = result.getOrNull()
                     error.value = null
@@ -121,7 +124,7 @@ class WeatherViewModel @Inject constructor(
             error.value = ERROR_EMPTY_CITY
             return
         }
-
+//8.добавлена корутина, чтобы не держать главный поток
         viewModelScope.launch {
             isLoading.value = true
             error.value = null
@@ -137,6 +140,7 @@ class WeatherViewModel @Inject constructor(
                     val data = result.getOrNull()
                     weatherData.value = data
                     cityName.value = data?.cityName
+                    //8. доп. проверка null
                     data?.let {
                         currentLocation.value = MyCustomLocation(0.0, 0.0, it.cityName)
                     }
@@ -149,11 +153,7 @@ class WeatherViewModel @Inject constructor(
             }
         }
     }
-
-    fun formatTemperature(temp: Double): String {
-        return "${temp.toInt()}°C"
-    }
-
+    //8. использована корутина с нужным сипатчером вместо кастом скуоп
     suspend fun loadWeatherIcon(iconCode: String): Bitmap? = withContext(Dispatchers.IO) {
         return@withContext try {
             val result = imageLoader.execute(
@@ -172,6 +172,7 @@ class WeatherViewModel @Inject constructor(
     }
 
     private fun startAutoRefresh() {
+        //8. использование апплай безопаснее
         refreshTimer = Timer().apply {
             schedule(object : TimerTask() {
                 override fun run() {
@@ -179,6 +180,7 @@ class WeatherViewModel @Inject constructor(
                         getWeatherForLocation(location)
                     }
                 }
+                //8. использование констант
             }, AUTO_REFRESH_DELAY, AUTO_REFRESH_DELAY)
         }
     }
@@ -191,6 +193,7 @@ class WeatherViewModel @Inject constructor(
     }
 
     override fun onCleared() {
+        //8. оичтка ресурсов не пустая
         super.onCleared()
         refreshTimer?.cancel()
         refreshTimer = null

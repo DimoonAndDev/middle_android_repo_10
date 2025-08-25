@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    //3. подключены плагины HILT
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.kotlin.kapt)
 }
@@ -40,7 +41,7 @@ android {
         compose = true
     }
 }
-//Все зависимости переведены в каталог
+//1. Все зависимости переведены в каталог - единообразие подходов
 dependencies {
     // Android core libraries
     implementation(libs.androidx.core.ktx)
@@ -56,7 +57,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
-    
+    //добавлены зависимости OkHTTp
     // Network
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
@@ -86,12 +87,13 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    //добавлены имплементации mockito для создания тестовых сущностей
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.androidx.core.testing)
 
-    // Hilt
+    // Hilt 3. Добавлены зависимости
     implementation(libs.hilt.android)
     kapt(libs.hilt.android.compiler)
     implementation(libs.hilt.navigation.compose)

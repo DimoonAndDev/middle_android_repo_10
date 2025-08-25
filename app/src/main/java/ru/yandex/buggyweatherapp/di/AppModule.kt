@@ -11,7 +11,8 @@ import ru.yandex.buggyweatherapp.data.repository.WeatherRepositoryImpl
 import ru.yandex.buggyweatherapp.domain.repository.LocationRepository
 import ru.yandex.buggyweatherapp.domain.repository.WeatherRepository
 import javax.inject.Singleton
-
+//2. Вынесено в папку DI
+//3. Небезопасная инициализация через RetrofitInstance.kt убрана, все через HIlt
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {

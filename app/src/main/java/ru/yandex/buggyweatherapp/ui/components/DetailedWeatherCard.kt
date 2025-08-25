@@ -46,9 +46,13 @@ import java.util.Locale
 
 @Composable
 fun DetailedWeatherCard(weather: WeatherData) {
+    //3. получение viewmodel через Hilt
+    //9. переименован класс, чтобы не путать со встренным в WeatherScreen - улучшение понятности кода,
+    //использование компонентов Compose вместо общих AndroidView, иконка через StateFlow из viewModel,
+    //разделение data и ui через viewmodel и coil
     val weatherViewModel = hiltViewModel<WeatherViewModel>()
-    val weatherIcon by weatherViewModel.weatherIcon.collectAsState()
-    var currentIconUrl by remember { mutableStateOf("") }
+    val weatherIcon by weatherViewModel.weatherIcon.collectAsState() //9. иконка достается и обновляется из viewmodel для однозначности источника
+    var currentIconUrl by remember { mutableStateOf("") } //9. отслеживание урл, чтобы обновлять иконку, только когда url обновился - экономия ресурсов
 
     Card(
         modifier = Modifier
@@ -90,12 +94,13 @@ fun DetailedWeatherCard(weather: WeatherData) {
                 LaunchedEffect(iconUrl) {
                     if (currentIconUrl != iconUrl) {
                         currentIconUrl = iconUrl
+                        //9. загрузка не через встроенный ImageLoader, а вьюмодел - разделение DATA и UI
                         weatherViewModel.loadWeatherIcon(iconUrl)
                     }
                 }
 
                 if (weatherIcon != null) {
-                    Image(
+                    Image(//9. использование стандартного Image от Compose
                         bitmap = weatherIcon!!.asImageBitmap(),
                         contentDescription = "Weather icon",
                         modifier = Modifier.size(50.dp),
@@ -166,7 +171,7 @@ private fun WeatherDataRow(label: String, value: String) {
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+    ) {//9. стилистическое выделение текста
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
@@ -178,7 +183,7 @@ private fun WeatherDataRow(label: String, value: String) {
             fontWeight = FontWeight.Medium
         )
     }
-}
+}//9. убран Disposable - Coil делает все сам.
 
 private fun formatTimestamp(timestamp: Long): String {
     val date = Date(timestamp * 1000)

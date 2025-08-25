@@ -4,69 +4,79 @@ import android.util.Log
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import ru.yandex.buggyweatherapp.data.api.WeatherApiService
 import ru.yandex.buggyweatherapp.domain.model.MyCustomLocation
 import ru.yandex.buggyweatherapp.domain.model.WeatherData
 import ru.yandex.buggyweatherapp.domain.repository.WeatherRepository
 import javax.inject.Inject
 
+//2. Вынесено в папку data. Создан отдельный репозиторийImpl. логика Clean Architecture
+//3. Вызов через HILT для введения правильного DI
+//7. решены ошибки: улучшено логирование, использование DI, добавлено кеширование данныхх,
+// перевод на корутины, защита от null с помощью элвис-операторов
 class WeatherRepositoryImpl @Inject constructor(
     private val weatherApi: WeatherApiService
 ) :
     WeatherRepository {
 
-    private var cachedWeatherData: WeatherData? = null
+    private var cachedWeatherData: WeatherData? =
+        null //7. Добавлено кеширование данных для стабильного доступа
     private var cacheTimestamp: Long = 0
     private val cacheTTL: Long = 10 * 60 * 1000 // 10 минут
 
-    override suspend fun getWeatherData(location: MyCustomLocation): Result<WeatherData> = withContext(
-        Dispatchers.IO) {
-        // Актуальности кэша
-        if (cachedWeatherData != null && System.currentTimeMillis() - cacheTimestamp < cacheTTL) {
-            return@withContext Result.success(cachedWeatherData!!)
-        }
-
-        return@withContext try {
-            val response = weatherApi.getCurrentWeather(location.latitude, location.longitude).execute()
-
-            if (response.isSuccessful && response.body() != null) {
-                val weatherData = parseWeatherData(response.body()!!, location)
-                cachedWeatherData = weatherData
-                cacheTimestamp = System.currentTimeMillis()
-                Result.success(weatherData)
-            } else {
-                Result.failure(Exception("API Error: ${response.code()} - ${response.message()}"))
+    //7. перевод на корутины, чтобы не задерживать основной поток
+    override suspend fun getWeatherData(location: MyCustomLocation): Result<WeatherData> =
+        withContext(
+            Dispatchers.IO
+        ) {
+            // Обновляется актуальности кэша
+            if (cachedWeatherData != null && System.currentTimeMillis() - cacheTimestamp < cacheTTL) {
+                return@withContext Result.success(cachedWeatherData!!)
             }
-        } catch (e: Exception) {
-            Log.e("WeatherRepository", "Error fetching weather", e)
-            // Возвращаем кэшированные данные, даже если они устарели
-            cachedWeatherData?.let { Result.success(it) } ?: Result.failure(e)
-        }
-    }
 
-    override suspend fun getWeatherByCity(cityName: String): Result<WeatherData> = withContext(Dispatchers.IO) {
-        return@withContext try {
-            val response = weatherApi.getWeatherByCity(cityName).execute()
+            return@withContext try {
+                val response =
+                    weatherApi.getCurrentWeather(location.latitude, location.longitude).execute()
 
-            if (response.isSuccessful && response.body() != null) {
-                val json = response.body()!!
-                val location = extractLocationFromResponse(json)
-                val weatherData = parseWeatherData(json, location)
-                cachedWeatherData = weatherData
-                cacheTimestamp = System.currentTimeMillis()
-                Result.success(weatherData)
-            } else {
-                Result.failure(Exception("API Error: ${response.code()}"))
+                if (response.isSuccessful && response.body() != null) {
+                    val weatherData = parseWeatherData(response.body()!!, location)
+                    cachedWeatherData = weatherData
+                    cacheTimestamp = System.currentTimeMillis()
+                    Result.success(weatherData)
+                } else {
+                    //7. Ошибка детализирована и логирована, для более простого теста и дебага
+                    Result.failure(Exception("API Error: ${response.code()} - ${response.message()}"))
+                }
+            } catch (e: Exception) {
+                Log.e("WeatherRepository", "Error fetching weather", e)
+                // Возвращаем кэшированные данные, даже если они устарели + логируется ошибка
+                cachedWeatherData?.let { Result.success(it) } ?: Result.failure(e)
             }
-        } catch (e: Exception) {
-            Log.e("WeatherRepository", "Error fetching weather by city", e)
-            cachedWeatherData?.let { Result.success(it) } ?: Result.failure(e)
         }
-    }
 
+    override suspend fun getWeatherByCity(cityName: String): Result<WeatherData> =
+        withContext(Dispatchers.IO) {
+            return@withContext try {
+                val response = weatherApi.getWeatherByCity(cityName).execute()
+
+                if (response.isSuccessful && response.body() != null) {
+                    val json = response.body()!!
+                    val location = extractLocationFromResponse(json)
+                    val weatherData = parseWeatherData(json, location)
+                    cachedWeatherData = weatherData //7. обновление кеша
+                    cacheTimestamp = System.currentTimeMillis()
+                    Result.success(weatherData)
+                } else {
+                    Result.failure(Exception("API Error: ${response.code()}"))
+                }
+            } catch (e: Exception) {
+                Log.e("WeatherRepository", "Error fetching weather by city", e)
+                //7. Более детальная обработка ошибок
+                cachedWeatherData?.let { Result.success(it) } ?: Result.failure(e)
+            }
+        }
+
+    //7. метод для получения данных без обновления
     override fun getCachedWeatherData(): WeatherData? = cachedWeatherData
 
 
@@ -77,7 +87,7 @@ class WeatherRepositoryImpl @Inject constructor(
         val weatherArray = json.getAsJsonArray("weather")
         val weather = weatherArray?.get(0)?.asJsonObject ?: JsonObject()
         val clouds = json.getAsJsonObject("clouds")
-//добавлена "безопасность" в формате элвис-операторов
+//7.добавлена "безопасность" в формате элвис-операторов
         return WeatherData(
             cityName = json.get("name")?.asString ?: location.name ?: "Unknown",
             country = sys.get("country")?.asString ?: "",
@@ -97,6 +107,7 @@ class WeatherRepositoryImpl @Inject constructor(
             timezone = json.get("timezone")?.asInt ?: 0,
             timestamp = json.get("dt")?.asLong ?: (System.currentTimeMillis() / 1000),
             rawApiData = json.toString(),
+            //7. улучшен доступ к опциональным полям
             rain = json.getAsJsonObject("rain")?.get("1h")?.asDouble,
             snow = json.getAsJsonObject("snow")?.get("1h")?.asDouble
         )
@@ -104,7 +115,7 @@ class WeatherRepositoryImpl @Inject constructor(
 
     private fun extractLocationFromResponse(json: JsonObject): MyCustomLocation {
         val coord = json.getAsJsonObject("coord")
-        //тоже элвис-операторы
+        //7.тоже элвис-операторы
         val lat = coord.get("lat")?.asDouble ?: 0.0
         val lon = coord.get("lon")?.asDouble ?: 0.0
         val name = json.get("name")?.asString ?: ""

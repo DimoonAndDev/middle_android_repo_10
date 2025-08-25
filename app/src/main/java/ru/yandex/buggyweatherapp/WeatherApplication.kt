@@ -2,9 +2,11 @@ package ru.yandex.buggyweatherapp
 
 import android.app.Application
 import android.content.Context
-import ru.yandex.buggyweatherapp.utils.ImageLoader
+import dagger.hilt.android.HiltAndroidApp
 import ru.yandex.buggyweatherapp.utils.LocationTracker
-
+//3. указана анотация Хилт, для введения правильного DI
+//4. Удалена небезопасная инициация через файл ImageLoader.kt
+@HiltAndroidApp
 class WeatherApplication : Application() {
     
     
@@ -18,9 +20,7 @@ class WeatherApplication : Application() {
         
         
         appContext = this
-        
-        
-        ImageLoader.initialize(this)
+
         LocationTracker.getInstance(this)
     }
 }

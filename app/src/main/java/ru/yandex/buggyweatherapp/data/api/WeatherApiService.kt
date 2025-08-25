@@ -1,10 +1,10 @@
-package ru.yandex.buggyweatherapp.api
+package ru.yandex.buggyweatherapp.data.api
 
 import com.google.gson.JsonObject
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Query
-
+//2. Вынесено в папку data. логика Clean Architecture
 interface WeatherApiService {
     
     
